@@ -1,615 +1,838 @@
-# Cerberus v0.2 - Production Architecture
+# Cerberus v0.3 - Hybrid 5G/Mesh Architecture
+*Multi-Modal Communication with Seamless Failover*
 
 ## Executive Summary
 
-This is a complete architectural overhaul addressing critical security, reliability, and operational concerns in the original design. The new architecture implements a **zero-trust, fault-tolerant, multi-layer defense system** with no single points of failure.
+This architecture addresses the critical challenge of operating drone swarms across areas with varying connectivity - from 5G-enabled urban areas to remote mountain regions with no infrastructure. The system implements **adaptive communication modes** with seamless failover and maintains security posture across all scenarios.
 
-**Key Improvements:**
-- Distributed consensus-based leadership
-- Hardware-rooted security with HSMs
-- Multi-band redundant communications
-- Real-time safety-critical message prioritization
-- Byzantine fault tolerance
-- Comprehensive intrusion detection
+**Key Innovation: Gradient Connectivity Model**
+Instead of binary 5G/mesh switching, we implement a gradient model that dynamically adapts to signal strength, latency, and security requirements.
 
 ---
 
-## 1. Core Architectural Principles
+## 1. Critical Loopholes in Original 5G+Mesh Approach
 
-### 1.1. Design Philosophy
-```
-SAFETY → SECURITY → MISSION SUCCESS
-```
+### 🔴 **Attack Surface Explosion**
+- **5G Basestation Spoofing**: Fake base stations can capture all drone traffic
+- **IMSI Catching**: Device identities exposed to surveillance equipment
+- **Protocol Downgrade Attacks**: Force drones to use weaker encryption
+- **Traffic Analysis**: 5G metadata reveals mission patterns even if encrypted
 
-1. **Safety First**: Flight safety overrides all other concerns
-2. **Zero Trust**: Every message, every node, every decision is verified
-3. **Graceful Degradation**: System remains functional with 50% node loss
-4. **Real-Time Guarantees**: Critical messages have bounded delivery times
-5. **Defense in Depth**: Multiple independent security layers
+### 🔴 **Operational Failures**
+- **Mode Switch Vulnerability**: Attack window during 5G→mesh transition
+- **Inconsistent Security Models**: Different encryption/auth between modes
+- **Data Hop Corruption**: Multi-hop routing through untrusted relay devices
+- **Timing Attacks**: Predictable communication patterns based on geography
 
-### 1.2. Threat Model
-- **Nation-state adversaries** with signal intelligence capabilities
-- **Physical capture** of individual drones
-- **Supply chain attacks** on hardware/software
-- **Jamming and spoofing** of communication channels
-- **Adversarial ML attacks** on detection systems
-
----
-
-## 2. System Architecture Overview
-
-### 2.1. Network Topology
-
-```mermaid
-graph TB
-    subgraph "Command Tier"
-        GCS[Ground Control Station]
-        SAT[Satellite Uplink]
-        CELL[Cellular Backup]
-    end
-
-    subgraph "Leadership Tier (Distributed)"
-        L1[Leader Node 1]
-        L2[Leader Node 2] 
-        L3[Leader Node 3]
-    end
-
-    subgraph "Worker Tier"
-        W1[Worker Node 1]
-        W2[Worker Node 2]
-        W3[Worker Node 3]
-        W4[Worker Node 4]
-        W5[Worker Node 5]
-    end
-
-    subgraph "Communication Layers"
-        PRIM[Primary: 2.4GHz Mesh]
-        SEC[Secondary: LoRa 915MHz]
-        TERT[Tertiary: UWB Ranging]
-        EMRG[Emergency: 433MHz FSK]
-    end
-
-    GCS -.-> SAT
-    GCS -.-> CELL
-    GCS --> L1
-    L1 <--> L2
-    L2 <--> L3
-    L3 <--> L1
-    
-    L1 --> W1
-    L1 --> W2
-    L2 --> W3
-    L2 --> W4
-    L3 --> W5
-    
-    W1 <--> W2
-    W2 <--> W3
-    W3 <--> W4
-    W4 <--> W5
-    W5 <--> W1
-
-    style GCS fill:#ff9999
-    style L1,L2,L3 fill:#99ccff
-    style W1,W2,W3,W4,W5 fill:#99ff99
-```
-
-### 2.2. Node Classification
-
-**Leadership Nodes (3-5 nodes):**
-- Run distributed consensus (RAFT)
-- Make tactical decisions
-- Coordinate worker nodes
-- Higher compute/memory resources
-
-**Worker Nodes:**
-- Execute assigned tasks
-- Report sensor data
-- Follow leader instructions
-- Lower resource requirements
-
-**Floating Leadership:**
-Any worker can become a leader based on:
-- Compute resources available
-- Network centrality
-- Mission criticality
-- Battery/fuel status
+### 🔴 **Infrastructure Dependencies**
+- **Carrier Network Compromise**: Nation-state actors control telecom infrastructure
+- **Emergency Service Conflicts**: 5G networks prioritize emergency services
+- **Bandwidth Throttling**: Carriers can limit drone traffic during peak usage
+- **Geographic Blackouts**: Targeted infrastructure attacks or natural disasters
 
 ---
 
-## 3. Security Architecture
+## 2. New Architecture: Adaptive Multi-Modal Communications
 
-### 3.1. Hardware Security Foundation
+### 2.1. Communication Mode Hierarchy
 
 ```mermaid
 graph TD
-    subgraph "Drone Hardware"
-        HSM[Hardware Security Module]
-        TPM[Trusted Platform Module]
-        SEC_BOOT[Secure Boot Chain]
-        ENC_STOR[Encrypted Storage]
+    subgraph "Communication Modes (Priority Order)"
+        TACTICAL[Tactical Mode - Mesh Only]
+        HYBRID[Hybrid Mode - 5G + Mesh]
+        INFRA[Infrastructure Mode - 5G Primary]
+        SATCOM[Satellite Mode - LEO/GEO]
+        EMERGENCY[Emergency Mode - Radio Beacon]
     end
-    
-    subgraph "Key Hierarchy"
-        ROOT_KEY[Root Identity Key]
-        DEVICE_KEY[Device Key]
-        SESSION_KEY[Session Keys]
-        MSG_KEY[Message Keys]
+
+    subgraph "Decision Engine"
+        SECURITY[Security Posture Assessment]
+        CONNECTIVITY[Signal Quality Analysis] 
+        MISSION[Mission Phase Requirements]
+        THREAT[Threat Level Detection]
     end
-    
-    HSM --> ROOT_KEY
-    ROOT_KEY --> DEVICE_KEY
-    DEVICE_KEY --> SESSION_KEY
-    SESSION_KEY --> MSG_KEY
-    
-    TPM --> SEC_BOOT
-    SEC_BOOT --> ENC_STOR
+
+    SECURITY --> MODE_SELECT[Mode Selection Algorithm]
+    CONNECTIVITY --> MODE_SELECT
+    MISSION --> MODE_SELECT
+    THREAT --> MODE_SELECT
+
+    MODE_SELECT --> TACTICAL
+    MODE_SELECT --> HYBRID  
+    MODE_SELECT --> INFRA
+    MODE_SELECT --> SATCOM
+    MODE_SELECT --> EMERGENCY
+
+    style TACTICAL fill:#ff9999
+    style HYBRID fill:#ffcc99
+    style INFRA fill:#99ff99
+    style SATCOM fill:#99ccff
+    style EMERGENCY fill:#ff6666
 ```
 
-**Key Features:**
-- **HSM-based root of trust**: Keys never exist in software
-- **Secure boot with attestation**: Verify software integrity
-- **Hardware-bound encryption**: Keys tied to physical device
-- **Forward secrecy**: Compromise of one key doesn't affect others
+### 2.2. Adaptive Communication Matrix
 
-### 3.2. Multi-Layer Encryption
-
-| Layer | Protocol | Key Rotation | Purpose |
-|-------|----------|-------------|---------|
-| **L4: Application** | AES-GCM | Per message | Payload encryption |
-| **L3: Session** | Noise_XK_25519 | Every 1000 msgs | Forward secrecy |
-| **L2: Transport** | ChaCha20-Poly1305 | Per hop | Mesh routing |
-| **L1: Physical** | Frequency Hopping | 100Hz | Anti-jamming |
-
-### 3.3. Authentication & Authorization
-
-**Distributed Certificate Authority:**
-```
-Bootstrap Phase:
-1. Factory provisions root certificate
-2. HSM generates device keypair
-3. Device requests certificate from 3+ CA nodes
-4. Threshold signature required for cert issuance
-
-Runtime Phase:
-1. mTLS for all connections
-2. Certificate pinning
-3. Real-time revocation via distributed CRL
-4. Automatic key rotation every 24 hours
-```
+| Scenario | Primary | Secondary | Tertiary | Security Level |
+|----------|---------|-----------|----------|----------------|
+| **Urban Friendly** | 5G | Mesh | Satellite | Standard |
+| **Urban Contested** | Mesh | Satellite | 5G (VPN) | High |
+| **Rural Friendly** | Satellite | 5G | Mesh | Standard |
+| **Rural Contested** | Mesh | Satellite | None | Maximum |
+| **Mountain/Remote** | Mesh | Satellite | Long-Range Radio | High |
+| **Emergency RTL** | All Available | Beacon | None | Minimal |
 
 ---
 
-## 4. Communication Subsystem
+## 3. Security-First 5G Integration
 
-### 4.1. Multi-Band Redundancy
+### 3.1. Hardened 5G Implementation
 
-**Primary Band: 2.4GHz 802.11s Mesh**
-- High bandwidth (50+ Mbps)
-- Real-time video/telemetry
-- Range: 1-2km line of sight
+**Problems with Standard 5G:**
+```yaml
+Standard 5G Issues:
+  - IMSI exposed during attachment
+  - Vulnerable to fake base stations
+  - Carrier can decrypt metadata
+  - No end-to-end authentication
+  - Susceptible to jamming
+```
 
-**Secondary Band: LoRa 915MHz**
-- Long range (10+ km)
-- Low power consumption
-- Command/control backup
+**Our Hardened Solution:**
+```mermaid
+graph LR
+    DRONE[Drone] --> VPN_GW[VPN Gateway Module]
+    VPN_GW --> CARRIER_VALIDATE[Carrier Validation]
+    CARRIER_VALIDATE --> ENCRYPT[Additional Encryption Layer]
+    ENCRYPT --> 5G_RADIO[5G Radio]
+    
+    5G_RADIO --> BASESTATION[Base Station]
+    BASESTATION --> CARRIER_NET[Carrier Network]
+    CARRIER_NET --> SECURE_ENDPOINT[Secure Endpoint]
+    
+    VPN_GW -.-> MESH_BACKUP[Mesh Backup Channel]
+    CARRIER_VALIDATE -.-> SPOOF_DETECT[Spoofing Detection]
+    
+    style VPN_GW fill:#ff9999
+    style SPOOF_DETECT fill:#ffcc99
+```
 
-**Tertiary Band: UWB Ranging**
-- Precise positioning (cm accuracy)
-- Anti-spoofing via ToF
-- Formation flying coordination
+**Security Layers:**
+1. **IMSI Privacy**: Rotating pseudonymous identifiers
+2. **Base Station Authentication**: Cryptographic verification of legitimate towers
+3. **Double Encryption**: Our crypto layer over 5G encryption
+4. **Traffic Obfuscation**: Dummy traffic to hide mission patterns
+5. **Carrier Validation**: Real-time verification of network infrastructure
 
-**Emergency Band: 433MHz FSK**
-- Unlicensed worldwide
-- Simple modulation (jamming resistant)
-- RTL/emergency commands only
-
-### 4.2. Message Priority System
+### 3.2. 5G Module Security Hardening
 
 ```c++
-enum MessagePriority {
-    EMERGENCY = 0,     // <10ms delivery (collision avoidance)
-    CRITICAL = 1,      // <100ms delivery (flight commands)
-    OPERATIONAL = 2,   // <1s delivery (status updates)
-    BACKGROUND = 3     // Best effort (logs, telemetry)
+class Secure5GModule {
+private:
+    HSM* security_module;
+    CryptoEngine* crypto;
+    ThreatDetector* ids;
+    
+public:
+    bool validateBaseStation(BaseStationInfo bs) {
+        // Cryptographic proof of legitimate infrastructure
+        if (!crypto->verifyCarrierCertificate(bs.certificate)) {
+            logThreat("FAKE_BASESTATION", bs.cell_id);
+            return false;
+        }
+        
+        // Signal fingerprinting
+        if (!validateRFFingerprint(bs.signal_pattern)) {
+            logThreat("BASESTATION_SPOOFING", bs.cell_id);
+            return false;
+        }
+        
+        // Geographic validation
+        if (!validateGeographicConsistency(bs.location)) {
+            logThreat("IMPOSSIBLE_BASESTATION_LOCATION", bs.cell_id);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    void establishSecureConnection() {
+        // Layer 1: Standard 5G encryption
+        establish5GConnection();
+        
+        // Layer 2: VPN tunnel through carrier network
+        establishVPNTunnel();
+        
+        // Layer 3: Our end-to-end encryption
+        establishE2EEncryption();
+        
+        // Layer 4: Traffic obfuscation
+        startTrafficObfuscation();
+    }
 };
 ```
 
-**Quality of Service:**
-- Emergency messages preempt all others
-- Separate queues per priority level
-- Bandwidth allocation: 40% Emergency, 30% Critical, 20% Operational, 10% Background
-- Automatic priority escalation based on age
-
-### 4.3. Mesh Routing Protocol
-
-**BATMAN-adv Enhanced with Security:**
-- Cryptographically signed route announcements
-- Metric includes trust score of intermediate nodes
-- Loop detection with cryptographic proofs
-- Load balancing across multiple paths
-
 ---
 
-## 5. Distributed Consensus & Leadership
+## 4. Intelligent Multi-Hop Relay Architecture
 
-### 5.1. RAFT Consensus Modified for Real-Time
+### 4.1. Secure Relay Node Design
 
-**Leader Election:**
-```python
-def select_leader():
-    candidates = []
-    for node in alive_nodes:
-        score = calculate_leader_score(node)
-        candidates.append((node, score))
-    
-    # Weighted random selection prevents deterministic targeting
-    return weighted_random_select(candidates)
+**Problem with Simple Relaying:**
+- Relay nodes can read/modify all traffic
+- No authentication of relay capabilities
+- Single point of failure in relay chain
+- No protection against malicious relays
 
-def calculate_leader_score(node):
-    return (
-        node.compute_capacity * 0.3 +
-        node.network_centrality * 0.2 +
-        node.battery_level * 0.2 +
-        node.mission_criticality * 0.2 +
-        node.trust_score * 0.1
-    )
-```
-
-**Byzantine Fault Tolerance:**
-- Requires 2f+1 nodes to tolerate f Byzantine failures
-- Leader rotation every 30 seconds (prevents single point targeting)
-- Cross-validation of leader decisions by followers
-
-### 5.2. Distributed State Management
-
-**Conflict-Free Replicated Data Types (CRDTs):**
-- Mission state converges without coordination
-- Survives network partitions
-- Automatic merge when partitions heal
-
-```yaml
-SwarmState:
-  formation: G-Counter (grows only)
-  waypoints: LWW-Register (last-writer-wins)
-  detections: OR-Set (add/remove semantics)
-  threats: PN-Counter (positive/negative counter)
-```
-
----
-
-## 6. Real-Time Safety Systems
-
-### 6.1. Collision Avoidance
-
-**Multi-Layer Approach:**
-1. **Hardware Layer**: Ultrasonic/lidar sensors with direct FC connection
-2. **Software Layer**: Predictive collision detection with 5-second lookahead
-3. **Network Layer**: Broadcast position/velocity 10x per second
-4. **Emergency Layer**: Immediate stop broadcast on emergency frequency
-
-**Geometric Conflict Resolution:**
-```python
-def resolve_collision(my_position, other_positions):
-    # Vector field method with priorities
-    avoidance_vector = Vector3(0, 0, 0)
-    
-    for other in other_positions:
-        if distance_to(other) < SAFETY_RADIUS:
-            # Higher ID has right of way (deterministic)
-            if my_id > other.id:
-                vector = (my_position - other.position).normalized()
-            else:
-                vector = (other.position - my_position).normalized()
-            
-            strength = 1.0 / max(distance_to(other), 0.1)
-            avoidance_vector += vector * strength
-    
-    return avoidance_vector.normalized()
-```
-
-### 6.2. Fail-Safe Mechanisms
-
-**Hierarchical Fail-Safes:**
-1. **Communication Loss**: RTL after 30 seconds
-2. **Battery Critical**: Auto-land at nearest safe zone
-3. **GPS Loss**: Switch to visual-inertial navigation
-4. **Sensor Failure**: Degrade to basic flight modes
-5. **Security Breach**: Immediate isolation and RTL
-
----
-
-## 7. Intrusion Detection & Response
-
-### 7.1. Multi-Modal Anomaly Detection
-
-**Network Traffic Analysis:**
-- Statistical analysis of message patterns
-- Frequency domain analysis for jamming detection
-- Packet timing analysis for replay attacks
-
-**Behavioral Monitoring:**
-- Flight pattern analysis (ML-based)
-- Command execution validation
-- Sensor fusion consistency checks
-
-**Cryptographic Validation:**
-- Real-time certificate verification
-- Signature validation on all messages
-- Key rotation compliance monitoring
-
-### 7.2. Automated Response System
-
-```python
-class ThreatResponse:
-    def handle_threat(self, threat_level, threat_type):
-        if threat_level == "CRITICAL":
-            self.isolate_compromised_nodes()
-            self.activate_backup_communications()
-            self.notify_human_operator()
-        
-        elif threat_level == "HIGH":
-            self.increase_authentication_frequency()
-            self.switch_to_backup_channels()
-            self.enhance_monitoring()
-        
-        elif threat_level == "MEDIUM":
-            self.log_suspicious_activity()
-            self.adjust_trust_scores()
-            self.continue_mission_with_caution()
-```
-
----
-
-## 8. Mission-Specific Adaptations
-
-### 8.1. Swarm Intelligence with Security
-
-**Authenticated Particle Swarm Optimization:**
-- All pheromone updates cryptographically signed
-- Multi-source validation required for environmental data
-- Outlier detection prevents adversarial manipulation
-
-**Secure Sensor Fusion:**
-- Byzantine agreement on detection results
-- Cross-validation between multiple sensors
-- Confidence scoring with provenance tracking
-
-### 8.2. Detection Pipeline Security
+**Solution: Onion Routing for Drones**
 
 ```mermaid
-graph LR
-    CAM[Camera] --> DETECT[YOLO Detection]
-    DETECT --> VALIDATE[Multi-Node Validation]
-    VALIDATE --> SIGN[Cryptographic Signing]
-    SIGN --> CONSENSUS[Consensus on Classification]
-    CONSENSUS --> REPORT[Secure Reporting]
+graph TB
+    subgraph "Mountain Area (No 5G)"
+        D1[Drone 1 - Source]
+        D2[Drone 2 - Relay]
+        D3[Drone 3 - Relay] 
+        D4[Drone 4 - Relay]
+    end
     
-    VALIDATE -.-> OUTLIER[Outlier Detection]
-    OUTLIER -.-> QUARANTINE[Quarantine Suspicious Nodes]
+    subgraph "5G Coverage Area"
+        D5[Drone 5 - Exit Node]
+        TOWER[5G Base Station]
+        BASE[Base Station]
+    end
+    
+    D1 -.->|Layer 1: Encrypt for D5| D2
+    D2 -.->|Layer 2: Encrypt for D4| D3  
+    D3 -.->|Layer 3: Encrypt for D2| D4
+    D4 -.->|Layer 4: Encrypt for D5| D5
+    
+    D5 --> TOWER
+    TOWER --> BASE
+    
+    style D1 fill:#ff9999
+    style D5 fill:#99ff99
+    style D2,D3,D4 fill:#ffcc99
 ```
 
-**Detection Validation:**
-1. Multiple nodes must confirm high-value targets
-2. Geometric consistency checks (sensor fusion)
-3. Temporal consistency (tracking over time)
-4. Adversarial ML detection (input validation)
+**Layered Encryption:**
+```python
+def create_onion_packet(message, relay_path, destination):
+    packet = message
+    
+    # Encrypt for destination first
+    packet = encrypt(packet, destination.public_key)
+    
+    # Then encrypt for each relay in reverse order
+    for relay in reversed(relay_path):
+        packet = encrypt(packet, relay.public_key)
+        packet = add_routing_header(packet, next_hop=relay)
+    
+    return packet
+
+def relay_packet(encrypted_packet, my_private_key):
+    # Decrypt outer layer only
+    inner_packet = decrypt(encrypted_packet, my_private_key)
+    
+    # Extract next hop (can't see final destination)
+    next_hop = extract_next_hop(inner_packet)
+    
+    # Forward without knowing contents or ultimate destination
+    forward_to(inner_packet, next_hop)
+```
+
+### 4.2. Dynamic Relay Path Selection
+
+**Multi-Path Routing:**
+- Calculate 3+ independent paths to 5G coverage
+- Route different message types on different paths
+- Real-time path quality assessment
+- Automatic path switching on compromise detection
+
+```python
+class RelayPathManager:
+    def select_optimal_paths(self, destination_area):
+        all_paths = self.calculate_all_possible_paths(destination_area)
+        
+        # Score paths based on multiple criteria
+        scored_paths = []
+        for path in all_paths:
+            score = self.calculate_path_score(path)
+            scored_paths.append((path, score))
+        
+        # Select top 3 paths with minimal overlap
+        return self.select_diverse_paths(scored_paths, count=3)
+    
+    def calculate_path_score(self, path):
+        return (
+            path.reliability * 0.3 +        # Historical success rate
+            path.security_level * 0.25 +    # Trust score of relay nodes
+            (1/path.latency) * 0.2 +        # Speed (inverse of latency)
+            path.bandwidth * 0.15 +          # Available throughput
+            (1/path.hop_count) * 0.1        # Fewer hops preferred
+        )
+```
 
 ---
 
-## 9. Implementation Architecture
+## 5. Seamless Mode Switching
 
-### 9.1. Software Stack
+### 5.1. Predictive Connectivity Mapping
+
+**Problem**: Reactive switching creates vulnerabilities during transition
+
+**Solution**: Predictive switching with overlap periods
+
+```mermaid
+graph TD
+    subgraph "Connectivity Prediction Engine"
+        GPS[GPS Position] --> TERRAIN[Terrain Analysis]
+        SPEED[Flight Vector] --> PREDICT[Coverage Prediction]
+        HISTORY[Historical Data] --> ML_MODEL[ML Prediction Model]
+        REAL_TIME[Real-time Signal] --> VALIDATE[Prediction Validation]
+    end
+    
+    subgraph "Mode Transition Controller"
+        PREDICT --> PRELOAD[Preload Next Mode]
+        ML_MODEL --> TIMING[Optimal Switch Timing]
+        VALIDATE --> EXECUTE[Execute Transition]
+    end
+    
+    EXECUTE --> OVERLAP[Overlap Period - Dual Mode]
+    OVERLAP --> VERIFY[Verify New Mode Stability]
+    VERIFY --> COMMIT[Commit to New Mode]
+    
+    style PREDICT fill:#99ccff
+    style OVERLAP fill:#ffcc99
+    style COMMIT fill:#99ff99
+```
+
+**Predictive Algorithm:**
+```python
+def predict_connectivity_transition(current_position, flight_vector):
+    # Look ahead 30 seconds of flight
+    future_positions = extrapolate_flight_path(current_position, flight_vector, 30)
+    
+    connectivity_forecast = []
+    for pos in future_positions:
+        signal_strength = terrain_model.predict_5g_strength(pos)
+        mesh_density = count_nearby_drones(pos, radius=2000)
+        
+        forecast = {
+            'position': pos,
+            '5g_signal': signal_strength,
+            'mesh_nodes': mesh_density,
+            'recommended_mode': select_optimal_mode(signal_strength, mesh_density)
+        }
+        connectivity_forecast.append(forecast)
+    
+    # Detect mode transitions
+    transitions = detect_mode_changes(connectivity_forecast)
+    
+    # Prepare for upcoming transitions
+    for transition in transitions:
+        if transition.time_to_switch < 15:  # 15 second warning
+            preload_communication_mode(transition.new_mode)
+        
+        if transition.time_to_switch < 5:   # 5 second execution
+            initiate_mode_transition(transition.new_mode)
+    
+    return connectivity_forecast
+```
+
+### 5.2. Secure Mode Transition Protocol
+
+**Overlap Period Security:**
+```yaml
+Transition Security Protocol:
+  1. Pre-Transition (15s before):
+     - Authenticate new communication channel
+     - Establish encryption keys for new mode
+     - Verify relay path availability
+  
+  2. Transition Period (5s overlap):
+     - Send duplicate critical messages on both channels
+     - Cross-validate message delivery
+     - Monitor for interception attempts
+  
+  3. Post-Transition (10s after):
+     - Verify new mode stability
+     - Purge old channel credentials
+     - Update routing tables
+```
+
+---
+
+## 6. Advanced Threat Detection & Response
+
+### 6.1. 5G-Specific Threat Detection
+
+```c++
+class G5ThreatDetector {
+public:
+    void monitor_network_anomalies() {
+        // IMSI catcher detection
+        if (detect_impossible_basestation_density()) {
+            trigger_alert("IMSI_CATCHER_SUSPECTED");
+            switch_to_mesh_mode();
+        }
+        
+        // Downgrade attack detection
+        if (encryption_strength_decreased()) {
+            trigger_alert("PROTOCOL_DOWNGRADE_ATTACK");
+            force_strongest_encryption();
+        }
+        
+        // Traffic analysis detection
+        if (unusual_latency_patterns()) {
+            trigger_alert("TRAFFIC_ANALYSIS_DETECTED");
+            activate_traffic_obfuscation();
+        }
+        
+        // Fake basestation detection
+        if (basestation_fingerprint_mismatch()) {
+            trigger_alert("FAKE_BASESTATION");
+            blacklist_basestation();
+            fallback_to_backup_channel();
+        }
+    }
+    
+private:
+    bool detect_impossible_basestation_density() {
+        // Too many base stations in remote area = IMSI catcher
+        int basestation_count = count_nearby_basestations(2000); // 2km radius
+        return (basestation_count > expected_density_for_area() * 2);
+    }
+    
+    bool basestation_fingerprint_mismatch() {
+        // Verify RF characteristics match known good basestations
+        RFFingerprint current = measure_current_basestation();
+        RFFingerprint expected = lookup_legitimate_basestation();
+        
+        return (fingerprint_similarity(current, expected) < 0.8);
+    }
+};
+```
+
+### 6.2. Relay Chain Integrity Monitoring
+
+**Proof-of-Relay Protocol:**
+```python
+def verify_relay_integrity(relay_path, test_message):
+    """Cryptographically verify that relay nodes are behaving correctly"""
+    
+    # Create test message with verifiable properties
+    test_packet = create_test_packet(
+        content=generate_random_payload(),
+        proof=create_relay_proof_requirement()
+    )
+    
+    # Send through relay chain
+    start_time = time.now()
+    send_via_relay_path(test_packet, relay_path)
+    
+    # Each relay must provide proof of correct forwarding
+    relay_proofs = collect_relay_proofs(relay_path, timeout=10)
+    
+    # Verify cryptographic proofs
+    for i, (relay, proof) in enumerate(zip(relay_path, relay_proofs)):
+        if not verify_relay_proof(relay, proof, test_packet):
+            mark_relay_as_compromised(relay)
+            recalculate_relay_paths(exclude=[relay])
+            return False
+    
+    # Verify end-to-end timing
+    end_time = time.now()
+    expected_latency = sum(r.expected_latency for r in relay_path)
+    
+    if (end_time - start_time) > expected_latency * 1.5:
+        # Someone is doing deep packet inspection or other delays
+        investigate_relay_chain_delay(relay_path)
+        return False
+    
+    return True
+```
+
+---
+
+## 7. Emergency Failsafe Systems
+
+### 7.1. Communication Blackout Protocols
+
+**Scenario**: All communication methods compromised or unavailable
+
+```mermaid
+graph TD
+    BLACKOUT[Communication Blackout Detected] --> ASSESS[Assess Threat Level]
+    
+    ASSESS --> LOW{Low Threat?}
+    LOW -->|Yes| AUTO_RTL[Automated RTL]
+    LOW -->|No| DEFENSIVE[Defensive Posture]
+    
+    DEFENSIVE --> SCATTER[Scatter Pattern]
+    SCATTER --> BEACON[Emergency Beacon Mode]
+    BEACON --> RALLY[Rally at Checkpoint]
+    
+    AUTO_RTL --> SAFE_LAND[Land at Safe Zone]
+    RALLY --> REESTABLISH[Attempt Reestablish Comms]
+    
+    REESTABLISH --> SUCCESS{Success?}
+    SUCCESS -->|Yes| RESUME[Resume Mission]
+    SUCCESS -->|No| ABORT[Mission Abort]
+    
+    style BLACKOUT fill:#ff6666
+    style SCATTER fill:#ffcc99
+    style ABORT fill:#ff9999
+```
+
+**Emergency Beacon Protocol:**
+```c++
+void activate_emergency_beacon() {
+    // Switch to simple, hard-to-jam modulation
+    radio.set_modulation(FSK_MODE);
+    radio.set_frequency(EMERGENCY_FREQ_433_MHZ);
+    radio.set_power(MAX_LEGAL_POWER);
+    
+    // Broadcast basic status every 30 seconds
+    EmergencyBeacon beacon = {
+        .drone_id = my_drone_id,
+        .gps_position = get_current_position(),
+        .battery_level = get_battery_percentage(),
+        .status = get_drone_status(),
+        .timestamp = get_utc_time(),
+        .signature = sign_with_emergency_key(above_fields)
+    };
+    
+    // Frequency hopping to avoid jamming
+    for (int i = 0; i < 5; i++) {
+        radio.set_frequency(EMERGENCY_FREQ_BASE + (i * 25_KHZ));
+        transmit(beacon);
+        delay(1000);  // 1 second between frequencies
+    }
+}
+```
+
+### 7.2. Autonomous Recovery Protocols
+
+**Self-Healing Network:**
+- Automatic topology reconfiguration when nodes are lost
+- Distributed consensus on new communication modes
+- Progressive degradation rather than complete failure
+
+**Recovery Decision Tree:**
+```python
+def autonomous_recovery_decision():
+    battery_level = get_battery_percentage()
+    distance_to_home = calculate_distance_to_home()
+    threat_assessment = evaluate_current_threats()
+    mission_criticality = get_mission_priority()
+    
+    if battery_level < 25:
+        return "IMMEDIATE_RTL"
+    
+    elif threat_assessment == "HIGH" and mission_criticality != "CRITICAL":
+        return "ABORT_MISSION"
+    
+    elif distance_to_home > safe_return_distance():
+        return "FIND_SAFE_LANDING_ZONE"
+    
+    elif communication_blackout_duration() > 300:  # 5 minutes
+        return "EMERGENCY_BEACON_MODE"
+    
+    else:
+        return "CONTINUE_AUTONOMOUS_OPERATION"
+```
+
+---
+
+## 8. Implementation Architecture
+
+### 8.1. Modular Communication Stack
 
 ```mermaid
 graph TD
     subgraph "Application Layer"
-        MISSION[Mission Executive]
-        SWARM[Swarm Intelligence]
-        DETECT[Detection Pipeline]
+        MISSION_CTRL[Mission Control]
+        SWARM_INTEL[Swarm Intelligence] 
+        DETECTION[Target Detection]
     end
     
-    subgraph "Security Middleware"
-        AUTH[Authentication Service]
+    subgraph "Communication Abstraction Layer"
+        COMM_MGR[Communication Manager]
+        MODE_CTRL[Mode Controller]
+        PATH_MGR[Path Manager]
+    end
+    
+    subgraph "Protocol Handlers"
+        G5_HANDLER[5G Handler]
+        MESH_HANDLER[Mesh Handler]
+        SAT_HANDLER[Satellite Handler]
+        EMERGENCY_HANDLER[Emergency Handler]
+    end
+    
+    subgraph "Security Layer"
         CRYPTO[Cryptographic Engine]
-        TRUST[Trust Management]
-        IDS[Intrusion Detection]
-    end
-    
-    subgraph "Communication Layer"
-        MESH[Mesh Protocol]
-        QOS[QoS Manager]
-        RADIO[Radio Abstraction]
-    end
-    
-    subgraph "System Services"
-        CONSENSUS[Consensus Engine]
-        STATE[State Manager]
-        MONITOR[Health Monitor]
+        AUTH[Authentication]
+        THREAT_DETECT[Threat Detection]
+        KEY_MGR[Key Management]
     end
     
     subgraph "Hardware Abstraction"
-        FC_BRIDGE[Flight Controller Bridge]
-        SENSOR_HAL[Sensor HAL]
-        HSM_DRIVER[HSM Driver]
+        G5_MODEM[5G Modem]
+        MESH_RADIO[Mesh Radio]
+        SAT_MODEM[Satellite Modem]
+        EMERGENCY_RADIO[Emergency Radio]
     end
     
-    MISSION --> AUTH
-    SWARM --> CRYPTO
-    DETECT --> TRUST
+    MISSION_CTRL --> COMM_MGR
+    SWARM_INTEL --> COMM_MGR
+    DETECTION --> COMM_MGR
     
-    AUTH --> CONSENSUS
-    CRYPTO --> STATE
-    TRUST --> MONITOR
-    IDS --> MONITOR
+    COMM_MGR --> MODE_CTRL
+    COMM_MGR --> PATH_MGR
     
-    MESH --> RADIO
-    QOS --> RADIO
+    MODE_CTRL --> G5_HANDLER
+    MODE_CTRL --> MESH_HANDLER
+    MODE_CTRL --> SAT_HANDLER
+    MODE_CTRL --> EMERGENCY_HANDLER
     
-    FC_BRIDGE --> MAVROS
-    SENSOR_HAL --> ROS2
-    HSM_DRIVER --> TPM
+    G5_HANDLER --> CRYPTO
+    MESH_HANDLER --> AUTH
+    SAT_HANDLER --> THREAT_DETECT
+    EMERGENCY_HANDLER --> KEY_MGR
+    
+    G5_HANDLER --> G5_MODEM
+    MESH_HANDLER --> MESH_RADIO
+    SAT_HANDLER --> SAT_MODEM
+    EMERGENCY_HANDLER --> EMERGENCY_RADIO
+    
+    style COMM_MGR fill:#99ccff
+    style CRYPTO fill:#ff9999
+    style THREAT_DETECT fill:#ffcc99
 ```
 
-### 9.2. Performance Requirements
+### 8.2. Configuration Management
 
-**Real-Time Constraints:**
-- Emergency messages: <10ms end-to-end
-- Critical flight commands: <100ms
-- Position updates: 100Hz minimum
-- Network convergence: <5 seconds after partition
-
-**Scalability Targets:**
-- Support up to 100 nodes per swarm
-- Linear performance scaling
-- Memory usage <2GB per node
-- CPU usage <60% average load
-
-**Reliability Requirements:**
-- 99.9% message delivery for critical messages
-- 99% uptime per node
-- Graceful degradation with 50% node loss
-- Recovery from total communication blackout within 30 seconds
-
----
-
-## 10. Testing & Validation Strategy
-
-### 10.1. Security Testing
-
-**Red Team Exercises:**
-- Physical drone capture scenarios
-- Radio jamming and spoofing
-- Malicious node injection
-- Supply chain compromise simulation
-
-**Formal Verification:**
-- Protocol correctness proofs
-- Cryptographic security analysis
-- Real-time constraint verification
-- Byzantine fault tolerance validation
-
-### 10.2. Integration Testing
-
-**Hardware-in-the-Loop:**
-- Full flight testing with security enabled
-- Multi-band radio interference testing
-- HSM performance under flight conditions
-- Battery life impact assessment
-
-**Simulation Environment:**
-- 1000+ node simulation capability
-- Adversarial scenario generation
-- Network partition simulation
-- Byzantine node behavior modeling
+**Adaptive Configuration:**
+```yaml
+# Dynamic configuration based on operational environment
+communication_profiles:
+  urban_friendly:
+    primary_mode: "5G"
+    security_level: "standard"
+    encryption: "AES256"
+    relay_hops: 1
+    
+  urban_contested:
+    primary_mode: "mesh"
+    security_level: "high"  
+    encryption: "AES256+ChaCha20"
+    relay_hops: 3
+    traffic_obfuscation: true
+    
+  rural_remote:
+    primary_mode: "mesh"
+    secondary_mode: "satellite"
+    security_level: "high"
+    encryption: "AES256+ChaCha20"
+    relay_hops: 5
+    power_optimization: true
+    
+  emergency_rtl:
+    primary_mode: "emergency_beacon"
+    security_level: "minimal"
+    encryption: "basic"
+    broadcast_interval: 30
+```
 
 ---
 
-## 11. Deployment & Operations
+## 9. Performance Optimization
 
-### 11.1. Secure Deployment Process
+### 9.1. Bandwidth Management
+
+**Intelligent Traffic Shaping:**
+```c++
+class BandwidthManager {
+private:
+    struct TrafficClass {
+        MessageType type;
+        int priority;
+        int allocated_bandwidth_kbps;
+        int current_usage_kbps;
+    };
+    
+    std::vector<TrafficClass> traffic_classes = {
+        {EMERGENCY_COLLISION, 0, 100, 0},      // Highest priority
+        {FLIGHT_COMMANDS, 1, 200, 0},
+        {STATUS_UPDATES, 2, 150, 0},
+        {SENSOR_DATA, 3, 500, 0},
+        {VIDEO_STREAM, 4, 1000, 0},            // Lowest priority
+    };
+    
+public:
+    bool can_send_message(MessageType type, int message_size_bytes) {
+        auto& traffic_class = find_traffic_class(type);
+        
+        int required_bandwidth = calculate_bandwidth_requirement(message_size_bytes);
+        
+        if (traffic_class.current_usage_kbps + required_bandwidth > 
+            traffic_class.allocated_bandwidth_kbps) {
+            
+            // Try to borrow from lower priority classes
+            if (!borrow_bandwidth_from_lower_priority(type, required_bandwidth)) {
+                return false;  // Drop message
+            }
+        }
+        
+        traffic_class.current_usage_kbps += required_bandwidth;
+        return true;
+    }
+};
+```
+
+### 9.2. Latency Optimization
+
+**Multi-Path Concurrent Transmission:**
+- Send critical messages on multiple paths simultaneously
+- First successful delivery cancels other attempts
+- Reduces worst-case latency in multi-hop scenarios
+
+**Predictive Path Pre-establishment:**
+- Establish relay paths before they're needed
+- Maintain hot-standby connections
+- Zero-latency failover for critical communications
+
+---
+
+## 10. Testing & Validation
+
+### 10.1. Security Testing Framework
+
+**Adversarial Testing:**
+```yaml
+Red_Team_Scenarios:
+  5G_Attacks:
+    - IMSI_catcher_deployment
+    - Fake_basestation_setup
+    - Protocol_downgrade_attacks
+    - Traffic_analysis_attempts
+    
+  Mesh_Network_Attacks:
+    - Malicious_relay_injection
+    - Traffic_modification_attempts
+    - Denial_of_service_attacks
+    - Routing_table_poisoning
+    
+  Physical_Attacks:
+    - Drone_capture_scenarios
+    - Radio_jamming_across_bands
+    - GPS_spoofing_attempts
+    - Hardware_tampering
+    
+  Combined_Attacks:
+    - Multi_vector_simultaneous
+    - Persistent_advanced_threats
+    - Supply_chain_compromise
+    - Insider_threat_simulation
+```
+
+### 10.2. Field Testing Requirements
+
+**Progressive Testing:**
+1. **Lab Environment**: Controlled RF environment, simulated threats
+2. **Limited Field**: Short-range, friendly environment
+3. **Extended Field**: Long-range, multiple terrain types
+4. **Adversarial Field**: Red team exercises, contested environment
+5. **Operational Validation**: Real-world mission scenarios
+
+---
+
+## 11. Operational Procedures
+
+### 11.1. Pre-Mission Checklist
 
 ```yaml
-Deployment Pipeline:
-  1. Secure Manufacturing:
-     - HSM provisioning in controlled facility
-     - Secure boot key injection
-     - Factory attestation
-  
-  2. Field Initialization:
-     - Secure pairing protocol
-     - Certificate distribution
-     - Mission parameter loading
-     - System integrity verification
-  
-  3. Mission Execution:
-     - Pre-flight security checks
-     - Real-time monitoring
-     - Anomaly response
-     - Post-flight forensics
+Communication_System_Checks:
+  Hardware:
+    - 5G module functionality test
+    - Mesh radio calibration
+    - Satellite modem GPS lock
+    - Emergency radio beacon test
+    
+  Software:
+    - Encryption key validation
+    - Certificate chain verification
+    - Threat detection system active
+    - Mode switching logic test
+    
+  Network:
+    - 5G carrier authentication
+    - Mesh network topology mapping
+    - Relay path calculation
+    - Emergency frequency clear
+    
+  Security:
+    - HSM functionality verified
+    - Secure boot chain intact
+    - Intrusion detection active
+    - Incident response procedures loaded
 ```
 
-### 11.2. Operational Security
+### 11.2. Mission Monitoring
 
-**Key Management:**
-- Automated key rotation
-- Emergency key revocation
-- Secure key escrow for forensics
-- Hardware tamper detection
-
-**Monitoring & Alerting:**
-- Real-time security dashboard
-- Automated threat response
-- Human operator escalation
-- Post-incident analysis
+**Real-Time Dashboards:**
+- Communication mode status per drone
+- Signal strength and quality metrics
+- Threat detection alerts
+- Bandwidth utilization
+- Relay path health
+- Security incident timeline
 
 ---
 
-## 12. Regulatory & Compliance
+## 12. Regulatory Compliance
 
-### 12.1. Radio Spectrum Compliance
+### 12.1. Spectrum Management
 
-**Licensed Bands:**
-- 2.4GHz ISM: FCC Part 15 compliance
-- 915MHz LoRa: Regional power limits
-- UWB: FCC Part 15.517 regulations
+**Multi-Band Coordination:**
+- 5G: Licensed spectrum, carrier agreements required
+- 2.4GHz: ISM band, power limitations
+- 915MHz: Regional variations in power/bandwidth
+- 433MHz: Emergency use, international coordination
+- Satellite: ITU coordination, licensing requirements
 
-**Frequency Coordination:**
-- Dynamic spectrum access
-- Interference avoidance
-- Emergency frequency protection
-- International compliance (ITU-R)
+### 12.2. Export Control Compliance
 
-### 12.2. Cryptographic Compliance
-
-**Export Controls:**
-- ITAR/EAR classification
-- Approved cryptographic modules
-- Key length requirements
-- Algorithm validation (FIPS 140-2)
-
-**Data Protection:**
-- Encryption at rest and in transit
-- Secure key deletion
-- Audit trail requirements
-- Privacy by design
-
----
-
-## 13. Future Extensions
-
-### 13.1. AI/ML Security
-
-**Adversarial ML Defense:**
-- Input sanitization for sensor data
-- Model integrity verification
-- Federated learning with secure aggregation
-- Differential privacy for training data
-
-### 13.2. Quantum-Resistant Security
-
-**Post-Quantum Cryptography:**
-- CRYSTALS-Kyber for key exchange
-- CRYSTALS-Dilithium for signatures
-- Hybrid classical/quantum security
-- Migration strategy planning
+**Technology Classification:**
+- Encryption: ITAR/EAR Category XIII(b)
+- Communications: Dual-use technology review
+- AI/ML: Emerging technology controls
+- Integration: System-level classification
 
 ---
 
 ## Conclusion
 
-This architecture addresses the critical flaws in the original design while providing a robust, scalable, and secure foundation for autonomous drone swarm operations. The multi-layer defense approach ensures that no single component failure can compromise mission success or safety.
+This hybrid architecture solves the critical problems with the original 5G+mesh approach:
 
-**Key Innovations:**
-- First truly zero-trust drone swarm architecture
-- Hardware-rooted security with HSM integration
-- Real-time Byzantine fault tolerance
-- Multi-band redundant communications
-- Automated threat response system
+**Security Improvements:**
+- ✅ Eliminates 5G-specific attack vectors through hardening
+- ✅ Provides secure multi-hop relaying with onion routing
+- ✅ Implements predictive threat detection and response
+- ✅ Maintains security posture across all communication modes
 
-**Production Readiness:**
-- Comprehensive testing strategy
-- Regulatory compliance framework
-- Operational procedures defined
-- Clear deployment pipeline
+**Operational Improvements:**
+- ✅ Seamless mode switching with predictive algorithms
+- ✅ Graceful degradation under attack or failure
+- ✅ Autonomous recovery without human intervention
+- ✅ Real-time adaptation to changing environments
 
-This system is designed to operate in contested environments against sophisticated adversaries while maintaining the highest standards of flight safety and mission reliability.
+**Technical Improvements:**
+- ✅ Optimized bandwidth allocation per message priority
+- ✅ Multi-path redundancy for critical communications
+- ✅ Hardware-rooted security across all modes
+- ✅ Comprehensive monitoring and alerting
+
+**The Result:** A communication system that works reliably from dense urban environments to remote mountain regions, maintaining security and operational capability even under sophisticated attack.
+
+This isn't just a fallback system - it's an intelligent, adaptive communication fabric that optimizes itself for every operational scenario.
