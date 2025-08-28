@@ -64,11 +64,11 @@ graph TD
     MODE_SELECT --> SATCOM
     MODE_SELECT --> EMERGENCY
 
-    style TACTICAL fill:#ff9999
-    style HYBRID fill:#ffcc99
-    style INFRA fill:#99ff99
-    style SATCOM fill:#99ccff
-    style EMERGENCY fill:#ff6666
+    style TACTICAL fill:#ff9999,color:#000
+    style HYBRID fill:#ffcc99,color:#000
+    style INFRA fill:#99ff99,color:#000
+    style SATCOM fill:#99ccff,color:#000
+    style EMERGENCY fill:#ff6666,color:#000
 ```
 
 ### 2.2. Adaptive Communication Matrix
@@ -113,8 +113,8 @@ graph LR
     VPN_GW -.-> MESH_BACKUP[Mesh Backup Channel]
     CARRIER_VALIDATE -.-> SPOOF_DETECT[Spoofing Detection]
     
-    style VPN_GW fill:#ff9999
-    style SPOOF_DETECT fill:#ffcc99
+    style VPN_GW fill:#ff9999,color:#000
+    style SPOOF_DETECT fill:#ffcc99,color:#000
 ```
 
 **Security Layers:**
