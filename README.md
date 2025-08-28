@@ -209,9 +209,9 @@ graph TB
     D5 --> TOWER
     TOWER --> BASE
     
-    style D1 fill:#ff9999
-    style D5 fill:#99ff99
-    style D2,D3,D4 fill:#ffcc99
+    style D1 fill:#ff9999,color:#000
+    style D5 fill:#99ff99,color:#000
+    style D2,D3,D4 fill:#ffcc99,color:#000
 ```
 
 **Layered Encryption:**
@@ -301,9 +301,9 @@ graph TD
     OVERLAP --> VERIFY[Verify New Mode Stability]
     VERIFY --> COMMIT[Commit to New Mode]
     
-    style PREDICT fill:#99ccff
-    style OVERLAP fill:#ffcc99
-    style COMMIT fill:#99ff99
+    style PREDICT fill:#99ccff,color:#000
+    style OVERLAP fill:#ffcc99,color:#000
+    style COMMIT fill:#99ff99,color:#000
 ```
 
 **Predictive Algorithm:**
@@ -479,9 +479,9 @@ graph TD
     SUCCESS -->|Yes| RESUME[Resume Mission]
     SUCCESS -->|No| ABORT[Mission Abort]
     
-    style BLACKOUT fill:#ff6666
-    style SCATTER fill:#ffcc99
-    style ABORT fill:#ff9999
+    style BLACKOUT fill:#ff6666,color:#000
+    style SCATTER fill:#ffcc99,color:#000
+    style ABORT fill:#ff9999,color:#000
 ```
 
 **Emergency Beacon Protocol:**
@@ -605,9 +605,9 @@ graph TD
     SAT_HANDLER --> SAT_MODEM
     EMERGENCY_HANDLER --> EMERGENCY_RADIO
     
-    style COMM_MGR fill:#99ccff
-    style CRYPTO fill:#ff9999
-    style THREAT_DETECT fill:#ffcc99
+    style COMM_MGR fill:#99ccff,color:#000
+    style CRYPTO fill:#ff9999,color:#000
+    style THREAT_DETECT fill:#ffcc99,color:#000
 ```
 
 ### 8.2. Configuration Management
